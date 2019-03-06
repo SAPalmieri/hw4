@@ -72,7 +72,14 @@ class AStar(object):
     #           x - tuple state
     # OUTPUT: List of neighbors that are free, as a list of TUPLES
     def get_neighbors(self, x):
-        # TODO: fill me in!
+        neighbors_list = []
+        if self.is_free: # if it is within the grid (can move)
+            (xclosest,yclosest) = self.snap_to_grid(self,x)
+            # NEED A BETTER METRIC FOR DETERMINING IF IT WAS SNAPPING TO GRID
+            if xclosest >= 0 and yclosest >= 0: #check every neighbor is snapped to grid
+                Eucdist = distance(self,)
+        
+        return neighbors_list
 
     # Gets the state in open_set that has the lowest f_score
     # INPUT: None
@@ -120,7 +127,14 @@ class AStar(object):
     # OUTPUT: Boolean, True if a solution from x_init to x_goal was found
     def solve(self):
         while len(self.open_set)>0:
-            # TODO: fill me in!
+            xcurrent = np.amin(self.f_score) #line 6
+            if xcurrent == x_goal: #line 7
+                return self.reconstruct_path() #line 8
+            #line 10-11
+
+            #line 12 - xcurrent?
+            neighbor_list = self.get_neighbors(xcurrent)
+            
 
         return False
 
