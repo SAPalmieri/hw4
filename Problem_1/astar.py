@@ -73,13 +73,30 @@ class AStar(object):
     # OUTPUT: List of neighbors that are free, as a list of TUPLES
     def get_neighbors(self, x):
         neighbors_list = []
-        if self.is_free: # if it is within the grid (can move)
-            (xclosest,yclosest) = self.snap_to_grid(self,x)
-            # NEED A BETTER METRIC FOR DETERMINING IF IT WAS SNAPPING TO GRID
-            if xclosest >= 0 and yclosest >= 0: #check every neighbor is snapped to grid
-                Eucdist = distance(self,)
-        
-        return neighbors_list
+        if self.is_free: # if it is within the map and not any obstacles
+            xsnap = self.snap_to_grid(x)
+            x = xsnap[0]
+            y = xsnap[1]
+            res = self.resolution
+            neigh1 = (x-res, y+res)
+            neighbors_list.append(neigh1)
+            neigh2 = (x, y+res)
+            neighbors_list.append(neigh2)
+            neigh3 = (x+res, y+res)
+            neighbors_list.append(neigh3)
+            neigh4 = (x-res, y)
+            neighbors_list.append(neigh4)
+            neigh5 = (x+res, y)
+            neighbors_list.append(neigh5)
+            neigh6 = (x-res, y-res)
+            neighbors_list.append(neigh6)
+            neigh7 = (x, y-res)
+            neighbors_list.append(neigh7)
+            neigh8 = (x+res, y-res)
+            neighbors_list.append(neigh8)
+            
+
+        return neighbors_list #list of tuples of neighbors
 
     # Gets the state in open_set that has the lowest f_score
     # INPUT: None
@@ -126,15 +143,35 @@ class AStar(object):
     # INPUT: None
     # OUTPUT: Boolean, True if a solution from x_init to x_goal was found
     def solve(self):
+        
         while len(self.open_set)>0:
-            xcurrent = np.amin(self.f_score) #line 6
-            if xcurrent == x_goal: #line 7
+            xcurrent = self.find_best_f_score()
+            if xcurrent == self.x_goal: #line 7
                 return self.reconstruct_path() #line 8
             #line 10-11
+            self.open_set.remove(xcurrent)
+            self.closed_set.append(xcurrent)
 
-            #line 12 - xcurrent?
+            #line 12 - find the neighbors of the lowest f score x
             neighbor_list = self.get_neighbors(xcurrent)
-            
+            for i in range(len(neighbor_list)):
+                neigh = neighbor_list[i]
+                #do nothing if the neighbor is in the closed set
+                if neigh in self.closed_set:
+                    continue
+                tentative_g_score = self.g_score[xcurrent] + self.distance(xcurrent,neigh)
+                if neigh not in self.open_set:
+                    self.open_set.append(neigh)
+                elif tentative_g_score > self.g_score[neigh]:
+                    continue
+                #need to change the three lines below
+                self.came_from = (neigh, xcurrent)
+                self.g_score = (neigh,tentative_g_score)
+                self.f_score = (neigh,tentative_g_score + self.distance(xcurrent,neigh))
+                
+            #     self.came_from.pop(xneigh)
+            #     self.g_score.pop(xneigh,tentative_g_score)
+            #     self.f_score.pop(xneigh,self.g_score[xneigh] + self.distance(xneigh,self.x_goal))
 
         return False
 
