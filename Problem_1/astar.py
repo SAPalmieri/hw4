@@ -77,26 +77,35 @@ class AStar(object):
             xsnap = self.snap_to_grid(x)
             x = xsnap[0]
             y = xsnap[1]
-            res = self.resolution
-            neigh1 = (x-res, y+res)
-            neighbors_list.append(neigh1)
-            neigh2 = (x, y+res)
-            neighbors_list.append(neigh2)
-            neigh3 = (x+res, y+res)
-            neighbors_list.append(neigh3)
-            neigh4 = (x-res, y)
-            neighbors_list.append(neigh4)
-            neigh5 = (x+res, y)
-            neighbors_list.append(neigh5)
-            neigh6 = (x-res, y-res)
-            neighbors_list.append(neigh6)
-            neigh7 = (x, y-res)
-            neighbors_list.append(neigh7)
-            neigh8 = (x+res, y-res)
-            neighbors_list.append(neigh8)
-            
-
-        return neighbors_list #list of tuples of neighbors
+            for xres,yres in [(1,0), (-1,0), (0,1), (0,-1), (1,1), (-1,1), (1,-1), (-1,-1)]:
+                x2 = x + xres
+                y2 = y + yres
+                # if x2 <0 or x2 > 7 or y2 <0 or y2 >7:
+                #     continue
+                neighbors_list.append((x2,y2))
+            return neighbors_list
+            '''
+        #     res = self.resolution
+        #     neigh1 = (x-res, y+res)
+        #     neighbors_list.append(neigh1)
+        #     neigh2 = (x, y+res)
+        #     neighbors_list.append(neigh2)
+        #     neigh3 = (x+res, y+res)
+        #     neighbors_list.append(neigh3)
+        #     neigh4 = (x-res, y)
+        #     neighbors_list.append(neigh4)
+        #     neigh5 = (x+res, y)
+        #     neighbors_list.append(neigh5)
+        #     neigh6 = (x-res, y-res)
+        #     neighbors_list.append(neigh6)
+        #     neigh7 = (x, y-res)
+        #     neighbors_list.append(neigh7)
+        #     neigh8 = (x+res, y-res)
+        #     neighbors_list.append(neigh8)
+        # else: #it is not free
+        #     return False
+        # return neighbors_list #list of tuples of neighbors
+        '''
 
     # Gets the state in open_set that has the lowest f_score
     # INPUT: None
@@ -145,33 +154,40 @@ class AStar(object):
     def solve(self):
         
         while len(self.open_set)>0:
-            xcurrent = self.find_best_f_score()
+            xcurrent = self.find_best_f_score() #lowest f_score
+            # print(self.closed_set)
+
+            #if we are at the goal, reconstruct the path
             if xcurrent == self.x_goal: #line 7
-                return self.reconstruct_path() #line 8
+                self.path = self.reconstruct_path() #line 8
+                return True
+
             #line 10-11
             self.open_set.remove(xcurrent)
             self.closed_set.append(xcurrent)
 
             #line 12 - find the neighbors of the lowest f score x
             neighbor_list = self.get_neighbors(xcurrent)
-            for i in range(len(neighbor_list)):
-                neigh = neighbor_list[i]
-                #do nothing if the neighbor is in the closed set
+
+            #go through all neighbors of xcurrent
+            for neigh in neighbor_list:
+                
+                #do nothing if the neighbor is in the closed set - because we have seen it before
                 if neigh in self.closed_set:
                     continue
-                tentative_g_score = self.g_score[xcurrent] + self.distance(xcurrent,neigh)
-                if neigh not in self.open_set:
+                if self.is_free(neigh):
+                    h = self.distance(xcurrent,neigh)
+                else: # it is in the obstacle, so make the current cost very high
+                    h = 1000000000000000000000000
+                tentative_g_score = self.g_score[xcurrent] + h
+                if neigh not in self.open_set: #if the neighbor is not in the open set, add it to the open set
                     self.open_set.append(neigh)
-                elif tentative_g_score > self.g_score[neigh]:
+                elif tentative_g_score >= self.g_score[neigh]: #else if the current gscore is > the neighbor's gscore, do nothing
                     continue
-                #need to change the three lines below
-                self.came_from = (neigh, xcurrent)
-                self.g_score = (neigh,tentative_g_score)
-                self.f_score = (neigh,tentative_g_score + self.distance(xcurrent,neigh))
-                
-            #     self.came_from.pop(xneigh)
-            #     self.g_score.pop(xneigh,tentative_g_score)
-            #     self.f_score.pop(xneigh,self.g_score[xneigh] + self.distance(xneigh,self.x_goal))
+
+                self.came_from[neigh] = xcurrent #({neigh:xcurrent})
+                self.g_score[neigh] = tentative_g_score #({neigh:tentative_g_score})
+                self.f_score[neigh] = tentative_g_score + self.distance(neigh, self.x_goal) #({neigh:tentative_g_score + self.distance(neigh,x_goal)})
 
         return False
 
@@ -228,7 +244,8 @@ occupancy = DetOccupancyGrid2D(width, height, obstacles)
 # occupancy = DetOccupancyGrid2D(width, height, obstacles)
 # x_init = tuple(np.random.randint(0,width-2,2).tolist())
 # x_goal = tuple(np.random.randint(0,height-2,2).tolist())
-# while not (occupancy.is_free(x_init) and occupancy.is_free(x_goal)):
+# while not (occupancy.is_free(x_init
+# ) and occupancy.is_free(x_goal)):
 #     x_init = tuple(np.random.randint(0,width-2,2).tolist())
 #     x_goal = tuple(np.random.randint(0,height-2,2).tolist())
 
