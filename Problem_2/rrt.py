@@ -86,9 +86,9 @@ class RRT(object):
             xnew = self.steer_towards(xrand,xnear,eps)
 
             if self.is_free_motion(self.obstacles,xnear,xnew):
-
+                #FIX THE VERTICES AND EDGES
                 #add vertex
-                P[k] = k-1
+                P[k] = k+1
                 #add edge
                 V[k] = xnew-xrand #edge goes from rand to new (which was steered towards)
                 if np.array_equal(xnew,self.x_goal):
@@ -115,17 +115,17 @@ class GeometricRRT(RRT):
         threshold = float("inf")
         for i in range(len(V)):
             dist =np.linalg.norm(V[i,:]-x)
-            if dist < threshold and threshold >0:
+            if dist < threshold and threshold >0 and x not in self.obstacles:
                 nearneigh = V[i,:]
                 threshold = dist
         return nearneigh
 
     def steer_towards(self, x, y, eps):
-        vec = y-x
+        vec = -(y-x)
         if np.linalg.norm(vec) < eps:
             return vec
         else:
-            return ( eps / np.linalg.norm(vec) )*vec 
+            return ( eps / np.linalg.norm(vec) ) * vec 
 
     def is_free_motion(self, obstacles, x1, x2):
         motion = np.array([x1, x2])
