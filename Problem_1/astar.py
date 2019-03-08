@@ -80,32 +80,9 @@ class AStar(object):
             for xres,yres in [(1,0), (-1,0), (0,1), (0,-1), (1,1), (-1,1), (1,-1), (-1,-1)]:
                 x2 = x + xres
                 y2 = y + yres
-                # if x2 <0 or x2 > 7 or y2 <0 or y2 >7:
-                #     continue
                 neighbors_list.append((x2,y2))
             return neighbors_list
-            '''
-        #     res = self.resolution
-        #     neigh1 = (x-res, y+res)
-        #     neighbors_list.append(neigh1)
-        #     neigh2 = (x, y+res)
-        #     neighbors_list.append(neigh2)
-        #     neigh3 = (x+res, y+res)
-        #     neighbors_list.append(neigh3)
-        #     neigh4 = (x-res, y)
-        #     neighbors_list.append(neigh4)
-        #     neigh5 = (x+res, y)
-        #     neighbors_list.append(neigh5)
-        #     neigh6 = (x-res, y-res)
-        #     neighbors_list.append(neigh6)
-        #     neigh7 = (x, y-res)
-        #     neighbors_list.append(neigh7)
-        #     neigh8 = (x+res, y-res)
-        #     neighbors_list.append(neigh8)
-        # else: #it is not free
-        #     return False
-        # return neighbors_list #list of tuples of neighbors
-        '''
+
 
     # Gets the state in open_set that has the lowest f_score
     # INPUT: None

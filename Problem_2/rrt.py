@@ -73,14 +73,15 @@ class RRT(object):
         #    - solution_path: if success is True, then must contain list of states (tree nodes)
         #          [x_init, ..., x_goal] such that the global trajectory made by linking steering
         #          trajectories connecting the states in order is obstacle-free.
-
+        z = np.random.uniform(0,1,max_iters)
         for k in range(max_iters): #iterate through all states
             # z = np.random.uniform(0,1,max_iters)
-            z = np.random.random_sample([1])
-            if z < goal_bias:
+            if z[k] < goal_bias:
                 xrand = self.x_goal
             else:
-                xrand = V[np.random.randint(0,max_iters-1),:]
+                xxrand = np.random.random(self.statespace_lo[0], self.statespace_hi[0])
+                yyrand = np.random.rand(self.statespace_lo[1], self.statespace_hi[1])
+                xrand = np.array([xxrand,yyrand])
             xnear = self.find_nearest(V,xrand)
             xnew = self.steer_towards(xrand,xnear,eps)
 
