@@ -73,30 +73,42 @@ class RRT(object):
         #    - solution_path: if success is True, then must contain list of states (tree nodes)
         #          [x_init, ..., x_goal] such that the global trajectory made by linking steering
         #          trajectories connecting the states in order is obstacle-free.
-        z = self.statespace_hi[1] * np.random.uniform(0,1,(max_iters,2))
+        zx = np.random.uniform(self.statespace_lo[0], self.statespace_hi[0],max_iters)
+        zy = np.random.uniform(self.statespace_lo[1], self.statespace_hi[1],max_iters)
+        z = np.stack((zx,zy),axis = 1)
         for k in range(max_iters): #iterate through all states
-            # z = np.random.uniform(0,1,max_iters)
-            if np.linalg.norm(z[k,:])  < goal_bias:
+            if np.linalg.norm(z[k,:]) < goal_bias:
                 xrand = self.x_goal
             else:
-                xxrand = self.statespace_hi[0] * np.random.random_sample([1])
-                yyrand = self.statespace_hi[1] * np.random.random_sample([1])
+                # xxrand = self.statespace_hi[0] * np.random.random_sample([1])
+                # yyrand = self.statespace_hi[1] * np.random.random_sample([1])
+                xxrand = np.random.uniform(self.statespace_lo[0], self.statespace_hi[0],1)
+                yyrand = np.random.uniform(self.statespace_lo[0], self.statespace_hi[0],1)
                 xrand = np.stack((xxrand,yyrand))
                 xrand = np.squeeze(xrand)
             xnear = self.find_nearest(V,xrand)
             xnew = self.steer_towards(xrand,xnear,eps)
 
+            # if it is collision free
             if self.is_free_motion(self.obstacles,xnear,xnew):
                 #FIX THE VERTICES AND EDGES
-                #add vertex
-                P[k] = k+1
-                #add edge
-                V[k] = xnew-xrand #edge goes from rand to new (which was steered towards)
+                P[k] = np.min(V[k])
+                V[k] = xnew  #edge goes from rand to new (which was steered towards)
                 if np.array_equal(xnew,self.x_goal):
-                    solution_path = V[self.x_init:self.x_goal,:]
                     success = True
+                    # strtidx = np.min.index(self.x_goal,V)
+                    # endidx = np.min.index(self.x_init,V)
+                    strtidx = V.index(self.x_init)
+                    endidx = V.index(self.x_goal)
+
+
+                    solution_path = V[strtidx:endidx,:]
+
+            else:
+                success = False
 
         plt.figure()
+        # plt.plot(z[:,0],z[:,1])
         plot_line_segments(self.obstacles, color="red", linewidth=2, label="obstacles")
         self.plot_tree(V, P, color="blue", linewidth=.5, label="RRT tree")
         if success:
@@ -116,7 +128,7 @@ class GeometricRRT(RRT):
         threshold = float("inf")
         for i in range(len(V)):
             dist =np.linalg.norm(V[i,:]-x)
-            if dist < threshold and threshold >0 and x not in self.obstacles:
+            if dist < threshold and threshold != 0 and x not in self.obstacles:
                 nearneigh = V[i,:]
                 threshold = dist
         return nearneigh
@@ -141,6 +153,7 @@ class GeometricRRT(RRT):
     def plot_path(self, path, **kwargs):
         path = np.array(path)
         plt.plot(path[:,0], path[:,1], **kwargs)
+        
 
 
 # Represents a planning problem for the Dubins car, a model of a simple car that moves at constant
@@ -185,6 +198,7 @@ class DubinsRRT(RRT):
                 for j in range(len(pts) - 1):
                     line_segments.append((pts[j], pts[j+1]))
         plot_line_segments(line_segments, **kwargs)
+        
 
     def plot_path(self, V, resolution = np.pi/24, **kwargs):
         pts = []
@@ -215,7 +229,7 @@ MAZE = np.array([
 grrt = GeometricRRT([-5,-5], [5,5], [-4,-4], [4,4], MAZE)
 grrt.solve(1.0, 2000)
 
-drrt = DubinsRRT([-5,-5,0], [5,5,2*np.pi], [-4,-4,0], [4,4,np.pi/2], MAZE, .5)
-drrt.solve(1.0, 1000)
+# drrt = DubinsRRT([-5,-5,0], [5,5,2*np.pi], [-4,-4,0], [4,4,np.pi/2], MAZE, .5)
+# drrt.solve(1.0, 1000)
 
 plt.show()
