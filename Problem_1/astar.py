@@ -81,7 +81,18 @@ class AStar(object):
                 x2 = x + xres
                 y2 = y + yres
                 neighbors_list.append((x2,y2))
-            return neighbors_list
+        #ensures they are snapped
+        for i in range(len(neighbors_list)):
+            neighbors_list[i] = self.snap_to_grid(neighbors_list[i])
+
+        # filter out nodes that are not free
+
+        neighbors_list_free = []
+        for k in range(len(neighbors_list)):
+            if self.is_free(neighbors_list[k]):
+                neighbors_list_free.append(neighbors_list[k])
+    
+        return neighbors_list_free
 
 
     # Gets the state in open_set that has the lowest f_score
@@ -152,11 +163,8 @@ class AStar(object):
                 #do nothing if the neighbor is in the closed set - because we have seen it before
                 if neigh in self.closed_set:
                     continue
-                if self.is_free(neigh):
-                    h = self.distance(xcurrent,neigh)
-                else: # it is in the obstacle, so make the current cost very high
-                    h = 1000000000000000000000000
-                tentative_g_score = self.g_score[xcurrent] + h
+
+                tentative_g_score = self.g_score[xcurrent] + self.distance(neigh,xcurrent)
                 if neigh not in self.open_set: #if the neighbor is not in the open set, add it to the open set
                     self.open_set.append(neigh)
                 elif tentative_g_score >= self.g_score[neigh]: #else if the current gscore is > the neighbor's gscore, do nothing
