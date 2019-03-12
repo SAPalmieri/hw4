@@ -74,26 +74,22 @@ class RRT(object):
         #          [x_init, ..., x_goal] such that the global trajectory made by linking steering
         #          trajectories connecting the states in order is obstacle-free.
 
-        def soln_path(V,P):
+        def soln_path(V,P,lastidx):
             entire_path = []
-            for idx in reversed(V):
-                entire_path.append(V[idx,:])
+            stateidx = lastidx
+            #go reverse order (child to parent) and build path from goal to init
+            #last state is when P[idx] = -1 (which is set at stateidx)
+            while stateidx > -1:
+                entire_path.append(V[stateidx,:])
+                stateidx = P[stateidx] #iterates for next state by changing index to parent index
             soln_path = []
-            # for idx in range(len(entire_path)):
-            #     soln_path.append(entire)
-            soln_path = entire_path
+            pathlen = len(entire_path)
+            #builds out path
+            # for idx in range(pathlen):
+            for idx in xrange(pathlen,0,-1): 
+                soln_path.append(entire_path[idx-1])
             return soln_path
-        def gen_soln_path(P, V, i):
-            rev_soln = []
-            curr_idx = i
-            while curr_idx != -1:
-                rev_soln.append(V[curr_idx, :])
-                curr_idx = P[curr_idx]
-            soln_path = []
-            for idx in range(len(rev_soln)):
-                soln_path.append(rev_soln[len(rev_soln) - idx - 1])
 
-            return soln_path
             
         success = False
         solution_path = []
@@ -115,8 +111,7 @@ class RRT(object):
                 if np.array_equal(xnew,self.x_goal):
                     print('goal reached')
                     success = True
-                    # solution_path = soln_path(V,P)
-                    solution_path = np.array(gen_soln_path(P, V, k))
+                    solution_path = soln_path(V,P,k)
                     break
 
         plt.figure()
