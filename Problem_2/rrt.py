@@ -103,7 +103,6 @@ class RRT(object):
             xnearidx = self.find_nearest(V,xrand) #nearest neighbor index
             xnew = self.steer_towards(V[xnearidx,:],xrand,eps) #next state 
             
-
             if self.is_free_motion(self.obstacles,V[xnearidx,:],xnew):
                 V[k,:] = xnew  #xnew is the next state we are driving towards
                 P[k] = xnearidx # parent index is the nearest neighbor index (parent to xnew)
@@ -130,10 +129,10 @@ class RRT(object):
 class GeometricRRT(RRT):
 
     def find_nearest(self, V, x):
-        threshold = 100000
+        threshold = float('inf')
         nearidx = 0
         for i in range(V.shape[0]):
-            if V[i,0] == 0 and V[i,1] == 0:
+            if np.linalg.norm(V[i,:])==0:
                 continue
             dist =np.linalg.norm(V[i,:]-x)
             if dist < threshold and threshold != 0 : 
@@ -177,16 +176,31 @@ class DubinsRRT(RRT):
         self.turning_radius = turning_radius
         super(self.__class__, self).__init__(statespace_lo, statespace_hi, x_init, x_goal, obstacles)
 
-    # def find_nearest(self, V, x):
-    #     # TODO: fill me in!
+    def find_nearest(self, V, x):
+        threshold = float('inf')
+        nearidx = 0
+        for i in range(V.shape[0]):
+            # sample = path_sample()
+            if path_length(self.x_goal,V[i,:], x) == 0:
+                continue
+            dist = path_length(V[i,:],x)
+            if dist < threshold and threshold !=0:
+                nearidx = i
+                threshold = dist
+        return nearidx
 
-    # def steer_towards(self, x, y, eps):
-    #     # TODO: fill me in!
-    #     # A subtle issue: if you use dubins.path_sample to return the point at distance
-    #     # eps along the path from x to y, use a turning radius slightly larger than
-    #     # self.turning_radius (i.e., 1.001*self.turning_radius). Without this hack,
-    #     # dubins.path_sample might return a point that you can't quite get to in distance
-    #     # eps (using self.turning_radius) due to numerical precision issues.
+    def steer_towards(self, x, y, eps):
+        # TODO: fill me in!
+        # A subtle issue: if you use dubins.path_sample to return the point at distance
+        # eps along the path from x to y, use a turning radius slightly larger than
+        # self.turning_radius (i.e., 1.001*self.turning_radius). Without this hack,
+        # dubins.path_sample might return a point that you can't quite get to in distance
+        # eps (using self.turning_radius) due to numerical precision issues.
+        mag = path_length(x,y)
+        if mag < eps:
+            return y
+        else:
+            return x + (eps/mag)*(y-x)
 
     def is_free_motion(self, obstacles, x1, x2, resolution = np.pi/6):
         pts = path_sample(x1, x2, self.turning_radius, self.turning_radius*resolution)[0]
@@ -234,10 +248,10 @@ MAZE = np.array([
     ((0, 0), (1, 1))
 ])
 
-grrt = GeometricRRT([-5,-5], [5,5], [-4,-4], [4,4], MAZE)
-grrt.solve(1.0, 2000)
+# grrt = GeometricRRT([-5,-5], [5,5], [-4,-4], [4,4], MAZE)
+# grrt.solve(1.0, 2000)
 
-# drrt = DubinsRRT([-5,-5,0], [5,5,2*np.pi], [-4,-4,0], [4,4,np.pi/2], MAZE, .5)
-# drrt.solve(1.0, 1000)
+drrt = DubinsRRT([-5,-5,0], [5,5,2*np.pi], [-4,-4,0], [4,4,np.pi/2], MAZE, .5)
+drrt.solve(1.0, 1000)
 
 plt.show()
