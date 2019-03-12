@@ -73,42 +73,46 @@ class RRT(object):
         #    - solution_path: if success is True, then must contain list of states (tree nodes)
         #          [x_init, ..., x_goal] such that the global trajectory made by linking steering
         #          trajectories connecting the states in order is obstacle-free.
-        zx = np.random.uniform(self.statespace_lo[0], self.statespace_hi[0],max_iters)
-        zy = np.random.uniform(self.statespace_lo[1], self.statespace_hi[1],max_iters)
-        z = np.stack((zx,zy),axis = 1)
+        # zx = np.random.uniform(self.statespace_lo[0], self.statespace_hi[0],max_iters)
+        # zy = np.random.uniform(self.statespace_lo[1], self.statespace_hi[1],max_iters)
+        # z = np.stack((zx,zy),axis = 1)
+        def soln_path(V,P):
+            entire_path = []
+            for idx in reversed(V):
+                entire_path.append(V[idx,:])
+            soln_path = []
+            # for idx in range(len(entire_path)):
+            #     soln_path.append(entire)
+            soln_path = entire_path
+            return soln_path
+
         for k in range(max_iters): #iterate through all states
-            if np.linalg.norm(z[k,:]) < goal_bias:
+            z = np.random.uniform(0,1)
+            xrand = np.random.uniform(self.statespace_lo, self.statespace_hi, self.x_init.shape)
+            if z < goal_bias:
                 xrand = self.x_goal
-            else:
-                # xxrand = self.statespace_hi[0] * np.random.random_sample([1])
-                # yyrand = self.statespace_hi[1] * np.random.random_sample([1])
-                xxrand = np.random.uniform(self.statespace_lo[0], self.statespace_hi[0],1)
-                yyrand = np.random.uniform(self.statespace_lo[0], self.statespace_hi[0],1)
-                xrand = np.stack((xxrand,yyrand))
-                xrand = np.squeeze(xrand)
-            xnear = self.find_nearest(V,xrand)
-            xnew = self.steer_towards(xrand,xnear,eps)
+            xnearidx = self.find_nearest(V,xrand) #nearest neighbor index
+            xnear = V[xnearidx] # nearest neighbor
+            xnew = self.steer_towards(xrand,xnear,eps) #next state 
 
             # if it is collision free
             if self.is_free_motion(self.obstacles,xnear,xnew):
                 #FIX THE VERTICES AND EDGES
-                P[k] = np.min(V[k])
-                V[k] = xnew  #edge goes from rand to new (which was steered towards)
+                V[k,:] = xnew  #xnew is the next state we are driving towards
+                P[k] = xnearidx # parent index is the nearest neighbor index (parent to xnew)
+
+                #if our next state is at the goal
                 if np.array_equal(xnew,self.x_goal):
+                    #we have arrived - set flag for plotting below
                     success = True
-                    # strtidx = np.min.index(self.x_goal,V)
-                    # endidx = np.min.index(self.x_init,V)
-                    strtidx = V.index(self.x_init)
-                    endidx = V.index(self.x_goal)
-
-
-                    solution_path = V[strtidx:endidx,:]
-
-            else:
-                success = False
+                    #must derive trajectory from x_goal -> x_init
+                    solution_path = soln_path(V,P)
+                else:
+                    success = False
+            # else:
+            #     success = False
 
         plt.figure()
-        # plt.plot(z[:,0],z[:,1])
         plot_line_segments(self.obstacles, color="red", linewidth=2, label="obstacles")
         self.plot_tree(V, P, color="blue", linewidth=.5, label="RRT tree")
         if success:
@@ -126,10 +130,13 @@ class GeometricRRT(RRT):
 
     def find_nearest(self, V, x):
         threshold = float("inf")
+        nearneigh = 0
         for i in range(len(V)):
             dist =np.linalg.norm(V[i,:]-x)
-            if dist < threshold and threshold != 0 and x not in self.obstacles:
-                nearneigh = V[i,:]
+            if np.linalg.norm(V[i,:]) == 0:
+                continue
+            elif dist < threshold and threshold != 0 : #and x not in self.obstacles:
+                nearneigh = i
                 threshold = dist
         return nearneigh
 
