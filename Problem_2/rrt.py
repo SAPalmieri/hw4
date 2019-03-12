@@ -129,8 +129,6 @@ class RRT(object):
         plt.annotate(r"$x_{init}$", self.x_init[:2] + [.2, 0], fontsize=16)
         plt.annotate(r"$x_{goal}$", self.x_goal[:2] + [.2, 0], fontsize=16)
         plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.03), fancybox=True, ncol=3)
-    def distance(self,x,y):
-        return np.linalg.norm(x-y)
 
 # Represents a geometric planning problem, where the steering solution between two points is a
 # straight line (Euclidean metric)
@@ -143,21 +141,17 @@ class GeometricRRT(RRT):
             if V[i,0] == 0 and V[i,1] == 0:
                 continue
             dist =np.linalg.norm(V[i,:]-x)
-            if dist < threshold and threshold != 0 : #and x not in self.obstacles:
+            if dist < threshold and threshold != 0 : 
                 nearidx = i
                 threshold = dist
         return nearidx
+
     def steer_towards(self, x, y, eps):
-        dist = self.distance(x, y)
-        if dist < eps:
+        mag = np.linalg.norm(y-x)
+        if mag < eps:
             return y
-        return [x[0] + eps / dist * (y[0] - x[0]), x[1] + eps / dist * (y[1] - x[1])]
-    # def steer_towards(self, x, y, eps):
-    #     vec = -(y-x)
-    #     if np.linalg.norm(vec) < eps:
-    #         return vec
-    #     else:
-    #         return ( eps / np.linalg.norm(vec) ) * vec 
+        else:
+            return x + (eps/mag)*(y-x)
 
     def is_free_motion(self, obstacles, x1, x2):
         motion = np.array([x1, x2])
