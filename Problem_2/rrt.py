@@ -176,21 +176,7 @@ class DubinsRRT(RRT):
     def __init__(self, statespace_lo, statespace_hi, x_init, x_goal, obstacles, turning_radius):
         self.turning_radius = turning_radius
         super(self.__class__, self).__init__(statespace_lo, statespace_hi, x_init, x_goal, obstacles)
-    '''
-    def find_nearest(self, V, x):
-        min_dist = 10000000
-        nearest_idx = 0
-        for i in range(V.shape[0]):
-            if V[i, 0] == 0 and V[i, 1] == 0 and V[i, 2] == 0:
-                continue
-            dist = path_length(V[i, :], x, self.turning_radius)
-            if dist < min_dist:
-                min_dist = dist
-                nearest_idx = i
 
-        return nearest_idx
-
-'''
     def find_nearest(self, V, x):
         threshold = 10000
         nearidx = 0
