@@ -117,6 +117,7 @@ class RRT(object):
         plot_line_segments(self.obstacles, color="red", linewidth=2, label="obstacles")
         self.plot_tree(V, P, color="blue", linewidth=.5, label="RRT tree")
         if success:
+            print(type(solution_path))
             self.plot_path(solution_path, color="green", linewidth=2, label="solution path")
         plt.scatter(V[:n,0], V[:n,1])
         plt.scatter([self.x_init[0], self.x_goal[0]], [self.x_init[1], self.x_goal[1]], color="green", s=30, zorder=10)
@@ -175,16 +176,29 @@ class DubinsRRT(RRT):
     def __init__(self, statespace_lo, statespace_hi, x_init, x_goal, obstacles, turning_radius):
         self.turning_radius = turning_radius
         super(self.__class__, self).__init__(statespace_lo, statespace_hi, x_init, x_goal, obstacles)
-
+    '''
     def find_nearest(self, V, x):
-        threshold = float('inf')
-        nearidx = 0
+        min_dist = 10000000
+        nearest_idx = 0
         for i in range(V.shape[0]):
-            # sample = path_sample()
-            path_dist = path_length(V[i,:], x, self.turning_radius)
-            if path_dist == 0:
+            if V[i, 0] == 0 and V[i, 1] == 0 and V[i, 2] == 0:
                 continue
-            if path_dist < threshold and threshold !=0:
+            dist = path_length(V[i, :], x, self.turning_radius)
+            if dist < min_dist:
+                min_dist = dist
+                nearest_idx = i
+
+        return nearest_idx
+
+'''
+    def find_nearest(self, V, x):
+        threshold = 10000
+        nearidx = 0
+        for i in range(len(V)):
+            if V[i,0] == 0 and V[i,1] == 0 and V[i,2] == 0:
+                continue
+            path_dist = path_length(V[i,:], x, self.turning_radius)
+            if path_dist < threshold:
                 nearidx = i
                 threshold = path_dist
         return nearidx
@@ -205,6 +219,7 @@ class DubinsRRT(RRT):
             # print(type(drive_to))
             # print(drive_to[0][1])
         return drive_to[0][1]
+        
 
     def is_free_motion(self, obstacles, x1, x2, resolution = np.pi/6):
         pts = path_sample(x1, x2, self.turning_radius, self.turning_radius*resolution)[0]
@@ -228,7 +243,10 @@ class DubinsRRT(RRT):
 
     def plot_path(self, V, resolution = np.pi/24, **kwargs):
         pts = []
-        for i in range(V.shape[0] - 1):
+        print(type(V))
+        # print(V.shape)
+        # for i in range(V.shape[0] - 1):
+        for i in range(len(V)-1):
             pts.extend(path_sample(V[i], V[i+1], self.turning_radius, self.turning_radius*resolution)[0])
         plt.plot([x for x, y, th in pts], [y for x, y, th in pts], **kwargs)
 
