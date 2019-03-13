@@ -181,12 +181,12 @@ class DubinsRRT(RRT):
         nearidx = 0
         for i in range(V.shape[0]):
             # sample = path_sample()
-            if path_length(self.x_goal,V[i,:], x) == 0:
+            path_dist = path_length(V[i,:], x, self.turning_radius)
+            if path_dist == 0:
                 continue
-            dist = path_length(V[i,:],x)
-            if dist < threshold and threshold !=0:
+            if path_dist < threshold and threshold !=0:
                 nearidx = i
-                threshold = dist
+                threshold = path_dist
         return nearidx
 
     def steer_towards(self, x, y, eps):
@@ -196,11 +196,15 @@ class DubinsRRT(RRT):
         # self.turning_radius (i.e., 1.001*self.turning_radius). Without this hack,
         # dubins.path_sample might return a point that you can't quite get to in distance
         # eps (using self.turning_radius) due to numerical precision issues.
-        mag = path_length(x,y)
-        if mag < eps:
+        path_dist = path_length(x,y, self.turning_radius)
+        if path_dist < eps:
             return y
         else:
-            return x + (eps/mag)*(y-x)
+            drive_to = path_sample(x, y, 1.001*self.turning_radius,eps)
+            # print(drive_to)
+            # print(type(drive_to))
+            # print(drive_to[0][1])
+        return drive_to[0][1]
 
     def is_free_motion(self, obstacles, x1, x2, resolution = np.pi/6):
         pts = path_sample(x1, x2, self.turning_radius, self.turning_radius*resolution)[0]
